@@ -35,10 +35,21 @@ jobs:
           fetch-depth: 1 # fetch-depth: 1 speeds up the clone by only grabbing the latest commit
           lfs: false # NOTE - If LFS ever starts getting used during builds, switch this to true!
 
+      - name: Set up MSVC Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Install sccache
         uses: mozilla/sccache-action@v0.0.9
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure sccache for GHA V2
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_SERVICE_V2', 'true')
 
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
