@@ -62,14 +62,19 @@ jobs:
 
       - name: Build ${{matrix.configuration}} binaries
         env:
-          SCCACHE_GHA_ENABLED: "true"
-        # /p:CLToolExe=sccache.exe redirects the compiler through sccache
-        # /p:TrackFileAccess=false is required for MSBuild to allow sccache to work
+          SCCACHE_GHA_ENABLED: "on"
+          # Explicitly point sccache to the compiler it needs to wrap
+          CC: sccache cl.exe
+          CXX: sccache cl.exe
         run: |
+          # Use /p:CLToolPath to ensure it looks in the right directory
+          # We also use the full path to the sccache executable provided by the action
+          $sccachePath = (Get-Command sccache).Source
           msbuild /m /v:minimal `
           /p:Configuration=${{matrix.configuration}} `
           /p:Platform=x64 `
-          /p:CLToolExe=sccache.exe `
+          /p:CLToolExe=$sccachePath `
+          /p:CLToolPath=(Split-Path $sccachePath) `
           /p:TrackFileAccess=false `
           build/iw7-mod.sln
 
