@@ -35,22 +35,6 @@ jobs:
           fetch-depth: 1 # fetch-depth: 1 speeds up the clone by only grabbing the latest commit
           lfs: false # NOTE - If LFS ever starts getting used during builds, switch this to true!
 
-      - name: Set up MSVC Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
-
-      - name: Install sccache
-        uses: mozilla/sccache-action@v0.0.9
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure sccache for GHA V2
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_SERVICE_V2', 'true')
-
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
 
@@ -61,28 +45,10 @@ jobs:
         uses: ammaraskar/msvc-problem-matcher@master
 
       - name: Build ${{matrix.configuration}} binaries
-        env:
-          SCCACHE_GHA_ENABLED: "on"
-          # Explicitly point sccache to the compiler it needs to wrap
-          CC: sccache cl.exe
-          CXX: sccache cl.exe
         run: |
-          # 1. Find the absolute path to the real MSVC compiler
-          $clPath = (Get-Command cl.exe).Source
-
-          # 2. Find the sccache executable
-          $sccacheExe = (Get-Command sccache).Source
-          $sccacheDir = Split-Path $sccacheExe
-
-          # 3. Tell sccache exactly what it is wrapping to avoid "binary not found"
-          $env:SCCACHE_PATH = "$clPath"
-
           msbuild /m /v:minimal `
           /p:Configuration=${{matrix.configuration}} `
           /p:Platform=x64 `
-          /p:CLToolExe="$sccacheExe" `
-          /p:CLToolPath="$sccacheDir" `
-          /p:TrackFileAccess=false `
           build/iw7-mod.sln
 
       - name: Upload ${{matrix.configuration}} binaries
