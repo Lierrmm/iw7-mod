@@ -67,14 +67,14 @@ jobs:
           CC: sccache cl.exe
           CXX: sccache cl.exe
         run: |
-          # Use /p:CLToolPath to ensure it looks in the right directory
-          # We also use the full path to the sccache executable provided by the action
-          $sccachePath = (Get-Command sccache).Source
+          $sccacheExe = (Get-Command sccache).Source
+          $sccacheDir = Split-Path $sccacheExe
+
           msbuild /m /v:minimal `
           /p:Configuration=${{matrix.configuration}} `
           /p:Platform=x64 `
-          /p:CLToolExe=$sccachePath `
-          /p:CLToolPath=(Split-Path $sccachePath) `
+          /p:CLToolExe="$sccacheExe" `
+          /p:CLToolPath="$sccacheDir" `
           /p:TrackFileAccess=false `
           build/iw7-mod.sln
 
